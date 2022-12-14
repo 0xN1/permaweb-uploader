@@ -172,6 +172,7 @@ const Uploader = () => {
             }
             setURI(`http://arweave.net/${tx.id}`)
             setTransaction(`${tx.id}`)
+            fetchBalance()
         }
     }
 
