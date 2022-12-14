@@ -15,9 +15,9 @@ const Home = () => {
             </div> */}
 
             <div className="flex select-none flex-col text-center text-6xl font-bold">
-                {APP_NAME}
+                <span className="mb-4">{APP_NAME}</span>
                 <Link
-                    className="m-5 mx-auto rounded-full bg-green-400 py-2 px-4 text-3xl shadow-xl"
+                    className="m-5 mx-auto rounded-full bg-green-400 py-3 px-5 text-3xl shadow-xl active:shadow-sm"
                     href="/uploader"
                 >
                     Uploader

@@ -113,6 +113,37 @@ const Uploader = () => {
         }
     }
 
+    const handleDownload = () => {
+        const csv = filesData.map((file, index) => {
+            return {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                uri: filesURI[index],
+            }
+        })
+        console.log(csv)
+        const csvRows = []
+        const headers = Object.keys(csv[0])
+        csvRows.push(headers.join(','))
+        for (const row of csv) {
+            const values = headers.map((header) => {
+                const escaped = ('' + row[header]).replace(/"/g, '\\"')
+                return `${escaped}`
+            })
+            csvRows.push(values.join(','))
+        }
+        // console.log(csvRows)
+        const csvContent = csvRows.join('\n')
+        const csvURI = 'data:text/csv;charset=utf-8,' + csvContent
+        const encodedUri = encodeURI(csvURI)
+        const link = document.createElement('a')
+        link.setAttribute('href', encodedUri)
+        link.setAttribute('download', Date.now() + '_permaweb.csv')
+        document.body.appendChild(link)
+        link.click()
+    }
+
     async function handleClear() {
         setFilesData([])
         setFiles([])
@@ -178,13 +209,15 @@ const Uploader = () => {
 
     return (
         <div className=" mx-auto flex min-h-screen flex-col items-center justify-center bg-stone-100 font-inter">
-            <span className=" text-center text-6xl font-bold">PermaWeb</span>
+            <span className=" mb-4 text-center text-6xl font-bold">
+                PermaWeb
+            </span>
             {/* <span className=" text-3xl">Permaweb Uploader</span> */}
             {!bundlrInstance && (
                 <button
                     onClick={initBundlr}
                     className="m-5 mx-auto rounded-full
-            bg-green-400 py-2 px-4 text-3xl font-bold shadow-xl"
+            bg-green-400 py-3 px-5 text-3xl font-bold shadow-xl active:shadow-sm"
                 >
                     Connect
                 </button>
@@ -203,7 +236,7 @@ const Uploader = () => {
                     <button
                         onClick={handleTopup}
                         className="rounded-full
-                        bg-green-400 py-2 px-4 text-xl shadow-xl outline-green-400"
+                        bg-green-400 py-2 px-4 text-xl shadow-xl outline-green-400 active:shadow-sm"
                     >
                         🛒 Topup
                     </button>{' '}
@@ -268,7 +301,7 @@ const Uploader = () => {
                     <span className="m-2 break-words font-bold">
                         <button
                             onClick={handleUpload}
-                            className="mx-4 mb-4 rounded-3xl bg-green-400 p-4 text-black"
+                            className="mx-4 mb-4 rounded-3xl bg-green-400 p-4 text-black shadow-xl active:shadow-sm"
                         >
                             🚀 Send to PermaWeb
                         </button>
@@ -277,13 +310,22 @@ const Uploader = () => {
             </div>
             {filesData && filesData.length > 0 && (
                 <div className="m-4 flex flex-col text-center">
-                    <span className=" text-3xl font-bold">History</span>
-                    <button
-                        className="mx-auto mt-2 p-2 text-lg underline"
-                        onClick={handleClear}
-                    >
-                        Clear
-                    </button>
+                    <span className=" mb-6 text-4xl font-bold">History</span>
+                    <div className="mx-auto flex flex-row gap-2 font-medium">
+                        <button
+                            className="text-md mx-auto mt-2 rounded-3xl bg-red-400 py-2 px-4 text-white shadow-xl active:shadow-sm"
+                            onClick={handleClear}
+                        >
+                            🗑️ Clear All
+                        </button>
+
+                        <button
+                            className="text-md mx-auto mt-2 rounded-3xl bg-orange-400 px-4 py-2 text-white shadow-xl active:shadow-sm"
+                            onClick={handleDownload}
+                        >
+                            💾 Save CSV
+                        </button>
+                    </div>
                     <div className="m-4 flex flex-row text-xl">
                         {filesData.length > 0 && (
                             <ul className="flex-1 px-4 text-left">
