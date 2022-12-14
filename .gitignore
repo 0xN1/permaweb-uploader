@@ -34,3 +34,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+wallet.json
+
+# bundlr
+/.bundlr
+out-id.txt
+out-manifest.csv
+out-manifest.json
