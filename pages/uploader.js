@@ -243,11 +243,11 @@ const Uploader = () => {
                 </div>
             )}
 
-            {error && (
+            {/* {error && (
                 <div className="w-1/2 overflow-hidden text-center text-sm text-red-500">
                     Please make sure you are connected to Polygon Network.
                 </div>
-            )}
+            )} */}
 
             <div className="flex flex-col items-center justify-center">
                 {bundlrInstance && (
