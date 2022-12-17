@@ -3,6 +3,8 @@ import { FilePond, registerPlugin } from 'react-filepond'
 import { WebBundlr } from '@bundlr-network/client'
 import { providers, utils } from 'ethers'
 
+import { useAutoAnimate } from '@formkit/auto-animate/react'
+
 import 'filepond/dist/filepond.min.css'
 
 import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation'
@@ -25,6 +27,8 @@ const Uploader = () => {
     const [transaction, setTransaction] = useState(null)
     const [chain, setChain] = useState(null)
     const [error, setError] = useState(null)
+
+    const [parent, enableAnimations] = useAutoAnimate()
 
     const bundlrRef = useRef()
 
@@ -208,7 +212,10 @@ const Uploader = () => {
     }
 
     return (
-        <div className=" mx-auto flex min-h-screen flex-col items-center justify-center bg-stone-100 font-inter">
+        <div
+            ref={parent}
+            className=" mx-auto flex min-h-screen flex-col items-center justify-center bg-stone-100 font-inter"
+        >
             <span className=" mb-4 text-center text-6xl font-bold">
                 PermaWeb
             </span>
