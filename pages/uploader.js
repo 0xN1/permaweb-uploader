@@ -3,6 +3,8 @@ import { FilePond, registerPlugin } from 'react-filepond'
 import { WebBundlr } from '@bundlr-network/client'
 import { providers, utils } from 'ethers'
 
+import '../styles/globals.css'
+
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 
 import 'filepond/dist/filepond.min.css'
@@ -10,6 +12,14 @@ import 'filepond/dist/filepond.min.css'
 import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation'
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css'
+import {
+    useAccount,
+    useNetwork,
+    useProvider,
+    useSigner,
+    useSwitchNetwork,
+} from 'wagmi'
+import { ConnectKitButton } from 'connectkit'
 
 registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview)
 
@@ -22,46 +32,36 @@ const Uploader = () => {
     const [balance, setBalance] = useState(0)
     const [acc, setAcc] = useState(null)
     const [price, setPrice] = useState(0)
-    const [uri, setURI] = useState(null)
     const [filesURI, setFilesURI] = useState([])
-    const [transaction, setTransaction] = useState(null)
-    const [chain, setChain] = useState(null)
-    const [error, setError] = useState(null)
 
+    const [error, setError] = useState(null)
     const [parent, enableAnimations] = useAutoAnimate()
+
+    const { switchNetwork } = useSwitchNetwork({
+        throwForSwitchChainNotSupported: true,
+    })
+    const connectKitProvider = useProvider()
+    const { isConnected } = useAccount()
+    const { chain } = useNetwork()
+
+    const { data: connectKitSigner } = useSigner()
+
+    const currentChainId = chain?.id
+    const desiredChainId = 137 // Polygon Mainnet
+    const currency = 'matic'
 
     const bundlrRef = useRef()
 
-    const currency = 'matic'
-
     async function initBundlr() {
-        await window.ethereum.enable()
-        const chainId = await window.ethereum.request({ method: 'eth_chainId' })
-        setChain(chainId)
-        checkNetwork()
-        const provider = new providers.Web3Provider(window.ethereum)
-        await provider._ready()
+        connectKitProvider.getSigner = () => connectKitSigner
         const bundlr = new WebBundlr(
             'https://node1.bundlr.network',
             'matic',
-            provider,
+            connectKitProvider,
+            {
+                providerUrl: 'https://polygon-rpc.com/',
+            },
         )
-
-        // try {
-        //     const curr = await bundlr.utils.getBundlerAddress(currency)
-        //     const bal = await bundlr.utils.getBalance(currency)
-        //     console.log(curr, utils.formatEther(bal.toString()))
-        // } catch {
-        //     console.log('Invalid bundlr node')
-        //     return
-        // }
-
-        // try {
-        //     const sis = await bundlr.signer
-        //     console.log(sis)
-        // } catch (error) {
-        //     console.log(error)
-        // }
 
         try {
             await bundlr.ready()
@@ -81,26 +81,19 @@ const Uploader = () => {
         fetchBalance()
     }
 
-    // async function checkNetwork() {
-    //     const chainId = await window.ethereum.request({ method: 'eth_chainId' })
-    //     if (chainId !== '0x89') {
-    //         changeNetwork()
-    //     }
-    // }
-
-    const checkNetwork = useCallback(async () => {
-        const chainId = await window.ethereum.request({ method: 'eth_chainId' })
-        if (chainId !== '0x89') {
-            changeNetwork()
+    useEffect(() => {
+        if (connectKitProvider && connectKitSigner) {
+            if (currentChainId !== desiredChainId && switchNetwork !== null) {
+                switchNetwork(desiredChainId)
+            }
         }
-    }, [chain])
+    }, [])
 
-    async function changeNetwork() {
-        await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x89' }],
-        })
-    }
+    useEffect(() => {
+        if (currentChainId !== desiredChainId && switchNetwork !== null) {
+            switchNetwork(desiredChainId)
+        }
+    }, [currentChainId])
 
     async function fetchBalance() {
         const bal = await bundlrRef.current.getLoadedBalance()
@@ -152,9 +145,7 @@ const Uploader = () => {
         setFilesData([])
         setFiles([])
         setFile(null)
-        setURI('')
         setFilesURI([])
-        setTransaction('')
     }
 
     const calculatePrice = async (size) => {
@@ -180,8 +171,6 @@ const Uploader = () => {
     }, [files])
 
     const handleUpload = async () => {
-        setURI('')
-        setTransaction('')
         if (files.length > 0) {
             const data = await file.result
             const tags = [
@@ -198,15 +187,11 @@ const Uploader = () => {
 
             await tx.sign()
             await tx.upload()
-            // console.log('upload tx:', tx.id)
-            setURI(`http://arweave.net/${tx.id}`)
             if (filesURI.length > 0) {
                 setFilesURI([...filesURI, `http://arweave.net/${tx.id}`])
             } else {
                 setFilesURI([`http://arweave.net/${tx.id}`])
             }
-            setURI(`http://arweave.net/${tx.id}`)
-            setTransaction(`${tx.id}`)
             fetchBalance()
         }
     }
@@ -219,24 +204,26 @@ const Uploader = () => {
             <span className=" mb-4 text-center text-6xl font-bold">
                 PermaWeb
             </span>
-            {/* <span className=" text-3xl">Permaweb Uploader</span> */}
-            {!bundlrInstance && (
+            <ConnectKitButton />
+
+            {!bundlrInstance && currentChainId === desiredChainId && (
                 <button
                     onClick={initBundlr}
                     className="m-5 mx-auto rounded-full
             bg-green-400 py-3 px-5 text-3xl font-bold shadow-xl active:shadow-sm"
                 >
-                    Connect
+                    Proceed
                 </button>
             )}
-            {bundlrInstance && (
+
+            {bundlrInstance && isConnected && (
                 <div className="my-5 flex flex-row items-center gap-3 text-xl font-bold">
-                    <span>
+                    {/* <span>
                         👽{' '}
                         {acc.slice(0, 4) +
                             '...' +
                             acc.slice(acc.length - 4, acc.length)}
-                    </span>
+                    </span> */}
                     <span className="text-xl">
                         💳 {parseFloat(balance).toFixed(4)}
                     </span>
@@ -250,14 +237,8 @@ const Uploader = () => {
                 </div>
             )}
 
-            {/* {error && (
-                <div className="w-1/2 overflow-hidden text-center text-sm text-red-500">
-                    Please make sure you are connected to Polygon Network.
-                </div>
-            )} */}
-
             <div className="flex flex-col items-center justify-center">
-                {bundlrInstance && (
+                {bundlrInstance && isConnected && (
                     <div className="mx-auto mt-5 w-96">
                         <FilePond
                             allowMultiple={false}
@@ -289,7 +270,7 @@ const Uploader = () => {
                                     setFile(reader)
                                 },
                             }}
-                            labelIdle='Drag & Drop your files or <span class="filepond--label-action">Browse</span>'
+                            labelIdle='Drag & Drop your file or <span class="filepond--label-action">Browse</span>'
                         />
                     </div>
                 )}
