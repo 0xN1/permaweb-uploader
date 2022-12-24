@@ -3,8 +3,6 @@ import { FilePond, registerPlugin } from 'react-filepond'
 import { WebBundlr } from '@bundlr-network/client'
 import { providers, utils } from 'ethers'
 
-import '../styles/globals.css'
-
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 
 import 'filepond/dist/filepond.min.css'
