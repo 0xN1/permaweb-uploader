@@ -1,1 +1,1 @@
-export const APP_NAME = 'PermaWeb Uploader'
+export const APP_NAME = 'Uploadr'
